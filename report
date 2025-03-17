@@ -1,0 +1,481 @@
+\documentclass[12pt]{article}
+\usepackage{fontspec, mathtools, ragged2e, csvsimple, filecontents, tikz, lscape, subcaption, float}
+
+\setmainfont{Times New Roman}
+
+\usepackage
+[
+a4paper,% other options: a3paper, a5paper, etc
+left=2cm,
+right=2cm,
+top=2cm,
+bottom=2cm,
+]{geometry}
+
+
+\DeclareCaptionFormat{custom}
+{%
+    #1\RaggedRight 
+    #2\small #3
+}
+\captionsetup
+{
+    format=custom
+}
+
+\begin{document}
+\begin{FlushRight}
+Liberty Freedom \\
+ABC1234-002 Summer 2333\\
+Date Experiment Performed: 218/03/33\\
+Date Report Submitted: 22/03/23\\
+
+\end{FlushRight}
+
+
+\Centering
+\textbf{AhAh Algorithm Benchmark}
+
+\begin{FlushLeft}
+\underline{Purpose:}\\
+\hfill \break
+The purpose of this experiment is to evaluate the big-O of different version of AhAh Algorithm that each implemented with iterate, index, and ArrayList, LinkedList. 
+
+\hfill \break
+\underline{Procedure:}\\
+\hfill \break
+
+First, write iteratedKeepDots(Collection<Dot> dots, int numberDesired), indexedKeepDots(List<Dot> dots, int numberDesired), and command line parse support that fit the requirement listed on Lab 3. Write the code that support multithread to accelerate the benchmark without break thread safety. \\
+
+Write code that automatically run all the benchmark test. When the test start, immediately go to task manager> detail, find the java.exe process that is responsible for the test, set its priority to realtime to decrease the operating system's process schedule policy change significantly jamming the test. 
+
+\hfill \break
+
+
+\pagebreak
+
+\underline{Data:}\\
+\hfill \break
+
+\begin{table}[H]							
+\begin{tabular}{|c|c|c|c|}							
+\hline 							
+kept dot	&	Strategy	&	ListType	&	Time(ns)	\\\hline
+100	&	index	&	LinkedList	&	58218100	\\\hline
+200	&	index	&	LinkedList	&	27602100	\\\hline
+100	&	index	&	ArrayList	&	13065900	\\\hline
+200	&	index	&	ArrayList	&	5558100	\\\hline
+100	&	iterate	&	LinkedList	&	7286900	\\\hline
+200	&	iterate	&	LinkedList	&	2965400	\\\hline
+100	&	iterate	&	ArrayList	&	9013400	\\\hline
+200	&	iterate	&	ArrayList	&	3393400	\\\hline
+\end{tabular}							
+\caption{noisy circle 250 dot.}							
+\end{table}
+\pagebreak
+
+\hfill \break
+\underline{Analysis:}\\
+\hfill \break
+
+\begin{table}[H]							
+\begin{tabular}{|c|c|c|c|}							
+\hline 							
+removed dot	&	Strategy	&	ListType	&	Time(ns)	\\\hline
+50	&	index	&	LinkedList	&	27602100	\\\hline
+150	&	index	&	LinkedList	&	58218100	\\\hline
+50	&	index	&	ArrayList	&	5558100	\\\hline
+150	&	index	&	ArrayList	&	13065900	\\\hline
+50	&	iterate	&	LinkedList	&	2965400	\\\hline
+150	&	iterate	&	LinkedList	&	7286900	\\\hline
+50	&	iterate	&	ArrayList	&	3393400	\\\hline
+150	&	iterate	&	ArrayList	&	9013400	\\\hline
+\end{tabular}							
+\caption{noisy circle 250 dot.}							
+\end{table}							
+
+%\begin{figure}[H]
+%\includegraphics[width=1\textwidth]{images/250.png}
+%\caption{The graph of Time(ns) versus removed dot of 250 dot. }
+%\end{figure}
+
+
+1. ArrayList\\
+
+a.\\
+private static List<Double> calculateCriticalValue(List<Dot> currentDotList) \{\\
+\hfill \break
+        List<Double> critic = new ArrayList<Double>(0); // new: 1\\
+        \hfill \break
+        critic.add((Double) Dot.criticalValue(currentDotList.get(currentDotList.size() - 1),\\
+                currentDotList.get(0), currentDotList.get(1))); \\
+                \hfill \break
+                // get: 1 * 3\\
+                // criticalValue: 1\\
+                // add: 1\\
+                \hfill \break
+        for (int g = 1; g < currentDotList.size() - 1; g++) \{ \\
+                // for: beginning is 3, for each cycle is 2. \\
+                // repeat n - 2 times\\
+                \hfill \break
+            critic.add((Double) Dot.criticalValue(currentDotList.get(g - 1),\\
+                    currentDotList.get(g), currentDotList.get(g + 1))); \\
+                    // get: 1 * 3\\
+                    // criticalValue: 1\\
+                    // add: 2, 3, 4, ..., n - 1 for each cycle. \\
+        \}\\
+        critic.add((Double) Dot.criticalValue(currentDotList.get(currentDotList.size() - 2),\\
+                currentDotList.get(currentDotList.size() - 1), currentDotList.get(0))); \\
+                // get: 1 * 3\\
+                // criticalValue: 1\\
+                // add: n\\
+                \hfill \break
+        return critic;\\
+    \}\\
+    
+$$ T(n) = 9 + 2 * (n - 3) + (3+1)*(n-2) + (2 + n-1)*(n-2)/2 + 1*3+n$$
+$$ T(n) = n^2 / 2 + 13n/2 - 3$$
+    $$O(n^2)$$
+    \hfill \break
+b.\\
+    private List<Double> calculateCriticalValueIterator(List<Dot> dotList) \{\\
+    \hfill \break
+        List<Double> critic = new LinkedList<Double>(); // new: 1\\
+        \hfill \break
+        java.util.Iterator<Dot> criticalValueIteratorStart = dotList.iterator(); // new: 1\\
+        java.util.Iterator<Dot> criticalValueIteratorMid = dotList.iterator(); // new: 1\\
+        java.util.Iterator<Dot> criticalValueIteratorEnd = dotList.iterator(); // new: 1\\
+        \hfill \break
+        criticalValueIteratorMid.next(); // next: 1\\
+        criticalValueIteratorEnd.next(); // next: 1\\
+        criticalValueIteratorEnd.next(); // next: 1\\
+        \hfill \break
+        critic.add((Double) Dot.criticalValue(dotList.get(dotList.size() - 1),\\
+                dotList.get(0), dotList.get(1))); \\
+                // get: 1 * 3\\
+                // criticalValue: 1\\
+                // add: 1\\
+                \hfill \break
+        while (criticalValueIteratorEnd.hasNext()) \{ \\
+                // while: 1\\
+                // repeat n - 3\\
+                \hfill \break
+            critic.add((Double) Dot.criticalValue(criticalValueIteratorStart.next(),\\
+                    criticalValueIteratorMid.next(), criticalValueIteratorEnd.next()));\\ 
+                    // next: 1 * 3\\
+                    // criticalValue: 1\\
+                    // add: 1\\
+        \}\\
+        \hfill \break
+        critic.add((Double) Dot.criticalValue(dotList.get(dotList.size() - 2),\\
+                dotList.get(dotList.size() - 1), dotList.get(0))); \\
+                // get: 1 * 3\\
+                // criticalValue: 1\\
+                // add: 1\\
+                \hfill \break
+        return critic;\\
+    \}\\
+$$T(n) = 14 + (1 + 1 * 3 + 1 + 1) * (n - 3) + 1 * 3$$
+$$ T(n) = 17+6n - 18 $$
+$$O(n)$$
+
+\hfill \break
+
+c.\\
+    private double iteratedKeepDots(Collection<Dot> dots, int numberDesired) \{\\
+    \hfill \break
+        long startTime = System.nanoTime();\\
+        \hfill \break
+        List<Double> criticalValueList; // 1\\
+        Iterator<Double> criticalValueListIterator; // 1\\
+        Iterator<Dot> dotsListIterator; // 1\\
+        \hfill \break
+        double minimumCritical = 1; // 1\\
+        double currentCriticalVal = 0; // 1\\
+        Dot currentDot = null; // 1\\
+        Dot needDelete = null; // 1\\
+        \hfill \break
+        while (dots.size() > numberDesired) \{ \\
+            // while: 1\\
+            // repeat range from 0 to n - 4\\
+            \hfill \break
+            criticalValueList = calculateCriticalValueIterator((List<Dot>) dots); // n\\
+            criticalValueListIterator = criticalValueList.iterator(); // 1\\
+            dotsListIterator = dots.iterator(); // 1\\
+            \hfill \break
+            while (criticalValueListIterator.hasNext() \&\& dotsListIterator.hasNext()) \{ \\
+                // while: 1\\
+                // repeat range from n, n - 1, n - 2, ... , 4\\
+                \hfill \break
+                currentCriticalVal = criticalValueListIterator.next(); // 1\\
+                currentDot = dotsListIterator.next();  // 1\\
+                \hfill \break
+                if (currentCriticalVal < minimumCritical) \{ // 1\\
+                    minimumCritical = currentCriticalVal;\\
+                    // 1\\
+                    \hfill \break
+                    needDelete = currentDot;\\
+                    // 1\\
+                \}\\
+            \}\\
+            if (needDelete != null) \{ // 1\\
+                dots.remove(needDelete); // n\\
+            \}\\
+            needDelete = null; // 1
+            minimumCritical = 1; // 1
+            \hfill \break
+        \}\\
+        return System.nanoTime() - startTime;
+    \}\\
+$$    T(n) = 7 + (n - 4) * 6 + (n + 4)* (n - 4)/2 * 2 + (n + 4) * (n - 4)/2 * 6$$
+
+$$    T(n) = 4n^2 + 6n - 81$$
+
+    $$O(n^2)$$
+   
+d.\\
+   private double indexedKeepDots(List<Dot> dots, int numberDesired) \{\\
+        long startTime = System.nanoTime();\\
+        \hfill \break
+        List<Double> criticalValue; // 1\\
+        int gto = 0; // 1\\
+        double dd = 0; // 1\\
+        \hfill \break
+        while (dots.size() > numberDesired) \{ // while: 1\\
+            // repeat range from 0 to n - 4\\
+            \hfill \break
+            criticalValue = calculateCriticalValue(dots); \\
+            // n\\
+            double curr = 1;\\
+            // 1\\
+            \hfill \break
+            for (int u = 0; u < criticalValue.size(); u++) \{ \\
+                // first: 3\\
+                // rest: 2\\
+                dd = criticalValue.get(u); // 1\\
+                if (dd < curr) \{ // 1\\
+                    curr = dd; // 1\\
+                    gto = u; // 1\\
+                \}\\
+            \}\\
+            \hfill \break
+            if (dots.size() > gto) \{ // 1\\
+                dots.remove(gto); // n\\
+            \}\\
+            
+            gto = 0; // 1\\
+
+        \}\\
+        return System.nanoTime() - startTime;\\
+    \}\\
+
+    $$T(n) = 3 + (n - 4) * 4 + (4 + n) * (n - 4) / 2 * 2 + (n - 4) + (4 + n) * (n - 4) / 2 * 6$$
+
+   $$ T(n) = 4n^2 + 5n - 81$$
+
+$$    O(n^2)$$
+2. LinkedList\\
+a.
+private static List<Double> calculateCriticalValue(List<Dot> currentDotList) \{
+
+        List<Double> critic = new ArrayList<Double>(0);  // 1\\
+        \hfill \break
+        critic.add((Double) Dot.criticalValue(currentDotList.get(currentDotList.size() - 1),\\
+                currentDotList.get(0), currentDotList.get(1))); \\
+                // get: n + 1 + 2\\
+                //criticalValue: 1\\
+                // add: 1\\
+                \hfill \break
+        for (int g = 1; g < currentDotList.size() - 1; g++) \{\\
+                // for: beginning is 3, for each cycle is 2. \\
+                // repeat n - 2 times\\
+                \hfill \break
+            critic.add((Double) Dot.criticalValue(currentDotList.get(g - 1),\\
+                    currentDotList.get(g), currentDotList.get(g + 1))); \\
+                    // get: first: 1 + 2 + ... + n - 2\\
+                    // second: 2 + 3 + ... + n - 1\\
+                    // third: 3 + 4 + ... + n\\
+                    // criticalValue: 1\\
+                    // add: 2 + 3 + 4 + ... + n - 1\\
+        \}\\
+        critic.add((Double) Dot.criticalValue(currentDotList.get(currentDotList.size() - 2),\\
+                currentDotList.get(currentDotList.size() - 1), currentDotList.get(0)));\\
+                // get: n - 1 + n + 1\\
+                // criticalValue: 1\\
+                // add: n\\
+                \hfill \break
+        return critic;\\
+    \}
+
+\hfill \break
+
+$$    T(n) = n + 10 + 2 * (n - 3) + (1 + n - 2) * (n - 2) / 2 + (2 + n - 1) * (n - 2) / 2 $$
+    $$+ (3 + n) * (n - 2) / 2 + (n - 2) + (2 + n - 1) * (n - 2) / 2 * 2 + n - 1 + n + n $$
+$$    T(n) = 5n^2 / 2 + 9n/2 - 4 $$
+$$    O(n^2) $$
+b.\\
+    private List<Double> calculateCriticalValueIterator(List<Dot> dotList) \{\\
+    \hfill \break
+        List<Double> critic = new LinkedList<Double>(); // new: 1\\
+        \hfill \break
+        java.util.Iterator<Dot> criticalValueIteratorStart = dotList.iterator(); // new: 1\\
+        java.util.Iterator<Dot> criticalValueIteratorMid = dotList.iterator(); // new: 1\\
+        java.util.Iterator<Dot> criticalValueIteratorEnd = dotList.iterator(); // new: 1\\
+        \hfill \break
+        criticalValueIteratorMid.next(); // new: 1\\
+        criticalValueIteratorEnd.next(); // new: 1\\
+        criticalValueIteratorEnd.next(); // new: 1\\
+        \hfill \break
+        critic.add((Double) Dot.criticalValue(dotList.get(dotList.size() - 1),\\
+                dotList.get(0), dotList.get(1))); \\
+                // get: first: n, second: 1, third: 2\\
+                // criticalValue: 1\\
+                // add: 1\\
+                \hfill \break
+        while (criticalValueIteratorEnd.hasNext()) \{\\ 
+                // while: 1\\
+                // repeat n - 3\\
+                \hfill \break
+                critic.add((Double) Dot.criticalValue(criticalValueIteratorStart.next(),\\
+                    criticalValueIteratorMid.next(), criticalValueIteratorEnd.next()));\\
+                    // next: 1 * 3\\
+                    // criticalValue: 1\\
+                    // add: 1\\
+        \}\\
+        critic.add((Double) Dot.criticalValue(dotList.get(dotList.size() - 2),\\
+                dotList.get(dotList.size() - 1), dotList.get(0))); \\
+                // get: first: n - 1, second: n, third: 1\\
+                // criticalValue: 1\\
+                // add: 1\\
+                \hfill \break
+        return critic;\\
+    \}\\
+
+    $$T(n) = 7 + n + 7 + (n - 2) * 6 + 2n$$
+    
+    $$T(n) = 9n +2$$
+    $$O(n)$$
+
+c.\\
+    private double iteratedKeepDots(Collection<Dot> dots, int numberDesired) \{\\
+    \hfill \break
+        long startTime = System.nanoTime();\\
+        \hfill \break
+        List<Double> criticalValueList; // 1\\
+        Iterator<Double> criticalValueListIterator; //1\\
+        Iterator<Dot> dotsListIterator; // 1\\
+        \hfill \break
+        double minimumCritical = 1; // 1\\
+        double currentCriticalVal = 0; // 1\\
+        Dot currentDot = null; // 1\\
+        Dot needDelete = null; // 1\\
+        \hfill \break
+        while (dots.size() > numberDesired) \{\\
+        // while: 1\\
+        // repeat range from 0 to n - 4\\
+        \hfill \break
+            criticalValueList = calculateCriticalValueIterator((List<Dot>) dots); // n\\
+            criticalValueListIterator = criticalValueList.iterator(); // 1\\
+            dotsListIterator = dots.iterator(); // 1\\
+            \hfill \break
+            while (criticalValueListIterator.hasNext() \&\& dotsListIterator.hasNext()) \{\\
+                // while: 1\\
+                // repeat range from n, n - 1, n - 2, ... , 4\\
+                currentCriticalVal = criticalValueListIterator.next(); \\
+                // next: 1\\
+                currentDot = dotsListIterator.next();\\
+                // next: 1\\
+                \hfill \break
+                if (currentCriticalVal < minimumCritical) \{\\
+                    // if: 1\\
+                    minimumCritical = currentCriticalVal;\\
+                    // 1\\
+                    needDelete = currentDot;\\
+                    // 1\\
+                \}\\
+            \}\\
+            \hfill \break
+            if (needDelete != null) \{ \\
+                // if: 1\\
+                dots.remove(needDelete); \\
+                // remove: 1\\
+            \}\\
+            needDelete = null; \\
+            // 1\\
+            minimumCritical = 1; \\
+            // 1\\
+        \}\\
+        return System.nanoTime() - startTime;\\
+    \}\\
+$$    T(n) = 7 + (n - 4) * 7 + (4 + n) * (n - 4) / 2 + 6*(n+4)(n-4)/2$$
+
+   $$ T(n) = 7n^2 / 2 + 7n - 77$$
+
+$$    O(n^2)$$
+
+d.\\
+   private double indexedKeepDots(List<Dot> dots, int numberDesired) \{\\
+   \hfill \break
+   long startTime = System.nanoTime(); \\
+   \hfill \break
+        List<Double> criticalValue; // 1\\
+        int gto = 0; // 1\\
+        double dd = 0; // 1\\
+        \hfill \break
+        while (dots.size() > numberDesired) \{ \\
+            // while: 1\\
+            // repeat range from 0 to n - 4\\
+            \hfill \break
+            criticalValue = calculateCriticalValue(dots); // $n^2$\\
+            double curr = 1; // 1\\
+            \hfill \break
+            for (int u = 0; u < criticalValue.size(); u++) \{ \\
+                // first: 3\\
+                // rest: 2\\
+                \hfill \break
+                dd = criticalValue.get(u); // n\\
+                if (dd < curr) \{\\
+                    curr = dd; // 1\\
+                    gto = u; // 1\\
+                \}\\
+            \}\\
+            if (dots.size() > gto) \{ \\
+                // 1\\
+                dots.remove(gto); \\
+                // n\\
+            \}\\
+            gto = 0; // 1
+        \}\\
+        return System.nanoTime() - startTime;
+    \}\\
+
+   $$ T(n) = 3 + 
+    (n - 4) \cdot 4 + (2n + 4)(n + 4)(n - 4)/6 + (4 + n) * (n - 4) / 2 + $$
+   $$ (n - 4) + (4 + n) \cdot (n - 4) / 2 \cdot 4 + ((2n + 4)(n + 4)(n - 4) / 6 + (n + 4)(n - 4) / 2)/2$$
+
+    $$T(n) = n^3 / 2 + 15n^2 / 4 - 3n - 287/3$$
+
+    $$ O(n^3)$$
+
+\hfill \break
+\underline{Discussion:}\\
+\hfill \break
+
+Set the priority of the corresponding java.exe process can significantly avoid the operating system reduce the occupation time when the process keeps existing after an amount of time, which can significantly extend the time consumption (hours or even days), making the result looks randomly distributed, and even loss results in the console. The potential solution includes the use of QEMU to simulate a set of specialized software and hardware that can firmly adjust the related parameter which includes the processor's basic frequency, CPU scheduling strategy, and instruction sets that are available. \\
+\hfill \break
+The graph and the big-O analysis both show the consistent result that iterate with LinkedList grows more slowly as n increases, and the run time of index with LinkedList grows faster as n increases. The relationship between the growth rate of the rest scenario needs a more strict method to investigate.
+\hfill \break
+
+Different data sets can cause significantly different results on the graph. For example, when the critical value is arranged from large to small, the more time it takes to decide the location of the dot that has the smallest critical value. \\
+
+\hfill \break
+
+\hfill \break
+
+\underline{Conclusion:}\\
+\hfill \break
+The result shows that when using LinkedList, the iteratedKeepDots has $O(n^2)$, and the indexedKeepDots $O(n^3)$. When use ArrayList, the iteratedKeepDots has $O(n^2)$, the indexedKeepDots has $O(n^2)$. As n increases, the run time of iterate with LinkedList grows significantly slower than the run time of index with LinkedList.
+
+
+\end{FlushLeft}
+\end{document}
